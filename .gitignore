@@ -1,0 +1,10 @@
+.DS_Store
+
+# Local credentials and record exports
+.env
+.env.*
+!.env.example
+theme-story-data*.json
+
+# Local generated artifacts
+outputs/

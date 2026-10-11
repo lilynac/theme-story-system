@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>テーマ別ストーリー編集室</title>
+  <style>
+    :root { color-scheme: light; --ink:#1f2937; --muted:#64748b; --line:#dbe2ea; --paper:#fff; --wash:#f4f7fb; --accent:#2856a6; --accent-soft:#eaf1ff; --warn:#8a4b08; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--wash); color:var(--ink); font:15px/1.55 system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif; }
+    header { background:#14233d; color:white; padding:22px max(24px,calc((100vw - 1240px)/2)); }
+    header h1 { margin:0 0 4px; font-size:23px; } header p { margin:0; color:#d3dced; }
+    main { max-width:1240px; margin:24px auto; padding:0 20px 36px; display:grid; grid-template-columns:minmax(300px, .85fr) minmax(420px,1.4fr); gap:20px; align-items:start; }
+    .panel { background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:20px; box-shadow:0 3px 12px #172c4a0a; }
+    h2 { font-size:18px; margin:0 0 14px; } h3 { font-size:15px; margin:0 0 8px; }
+    label { display:block; font-size:13px; font-weight:650; margin:12px 0 5px; }
+    input,select,textarea,button { font:inherit; } input,select,textarea { width:100%; border:1px solid #cbd5e1; border-radius:7px; padding:9px 10px; color:var(--ink); background:white; }
+    textarea { min-height:96px; resize:vertical; } input:focus,select:focus,textarea:focus { outline:2px solid #9ab8ff; border-color:var(--accent); }
+    button { border:0; border-radius:7px; padding:9px 13px; font-weight:700; cursor:pointer; background:var(--accent); color:white; }
+    button.secondary { background:var(--accent-soft); color:#214b91; } button.danger { background:#fff0f0; color:#a32b2b; } button:hover { filter:brightness(.96); }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .hint,.muted { color:var(--muted); font-size:12px; } .hint { margin:7px 0; } .pill { display:inline-block; background:#eef2f7; border-radius:99px; padding:2px 8px; font-size:11px; color:#475569; }
+    .workspace { display:grid; gap:16px; } .card { border:1px solid var(--line); border-radius:9px; padding:12px; margin:9px 0; background:white; }
+    .card-head { display:flex; justify-content:space-between; gap:10px; align-items:start; } .card p { white-space:pre-wrap; margin:8px 0; }
+    .card-controls { display:grid; grid-template-columns:1fr 145px; gap:8px; align-items:end; margin-top:10px; }
+    .card-controls label { margin:0 0 4px; } .card-controls input,.card-controls select { padding:7px; font-size:13px; }
+    .arc { border-left:4px solid #aac1f1; padding-left:12px; margin:14px 0; } .arc h3 { color:#244b8e; }
+    #preview { border:1px solid var(--line); border-radius:8px; background:#fbfcfe; min-height:150px; padding:14px; white-space:pre-wrap; }
+    .empty { color:var(--muted); text-align:center; padding:26px 8px; } .status { min-height:20px; color:#276749; font-size:13px; }
+    @media (max-width:850px) { main { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>テーマ別ストーリー編集室</h1>
+    <p>作業の記録をテーマで束ね、出典を保ったまま起承転結の記事に整えます。</p>
+  </header>
+  <main>
+    <div class="workspace">
+      <section class="panel">
+        <h2>記録カードを追加</h2>
+        <form id="entry-form">
+          <div class="row">
+            <div><label for="kind">記録の種類</label><select id="kind"><option>開発ログ</option><option>ナレッジ</option><option>日報</option><option>週報</option></select></div>
+            <div><label for="date">日付</label><input id="date" type="date"></div>
+          </div>
+          <label for="title">見出し</label><input id="title" required placeholder="例：演習前に接続試験を追加">
+          <div class="row">
+            <div><label for="theme">テーマ</label><input id="theme" required placeholder="例：事前確認の改善"></div>
+            <div><label for="certainty">根拠状態</label><select id="certainty"><option>確認済み</option><option>報告</option><option>推定</option><option>未確認</option></select></div>
+          </div>
+          <label for="body">内容</label><textarea id="body" required placeholder="起きたこと、判断、学びを一つに絞って記録"></textarea>
+          <label for="source">出典</label><input id="source" placeholder="ファイル名、ログID、URL、ページなど">
+          <p class="hint">日報・週報が同じ出来事を要約している場合は、同じ出典や関連記録を使って重複を避けます。</p>
+          <div class="actions"><button type="submit">カードを保存</button><button class="secondary" id="demo" type="button">例を読み込む</button></div>
+        </form>
+      </section>
+      <section class="panel">
+        <h2>記事の設定</h2>
+        <label for="article-title">記事タイトル</label><input id="article-title" placeholder="テーマから記事の題名を付ける">
+        <label for="article-theme">テーマ</label><select id="article-theme"><option value="">記録を追加すると選べます</option></select>
+        <label for="intro">導入・読者への説明</label><textarea id="intro" placeholder="この記事で何を伝えるか。カードにない事実は加えない"></textarea>
+        <div class="actions"><button id="download-md" type="button">Markdownを書き出す</button><button class="secondary" id="export-json" type="button">データを書き出す</button><button class="secondary" id="import-json" type="button">データを読み込む</button><input id="json-file" type="file" accept="application/json" hidden></div>
+        <div id="status" class="status" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <div class="workspace">
+      <section class="panel">
+        <h2>テーマの記録</h2>
+        <p class="hint">各カードを起・承・転・結へ配置します。転機がなければ、無理に問題や成功を作らず、重要な判断や学びを置いてください。</p>
+        <div id="cards"><div class="empty">カードはまだありません。左のフォームから追加してください。</div></div>
+      </section>
+      <section class="panel">
+        <h2>記事プレビュー</h2>
+        <div id="preview" class="muted">テーマを選ぶと記事の下書きを表示します。</div>
+      </section>
+    </div>
+  </main>
+<script>
+(() => {
+  const phases = ["起", "承", "転", "結"];
+  const $ = id => document.getElementById(id);
+  const status = message => { $("status").textContent = message; };
+  let records = [];
+  try { records = JSON.parse(localStorage.getItem("theme-story-records-v1") || "[]"); } catch { records = []; }
+  const persist = () => localStorage.setItem("theme-story-records-v1", JSON.stringify(records));
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+  const themes = () => [...new Set(records.map(record => record.theme).filter(Boolean))].sort((a,b) => a.localeCompare(b,"ja"));
+  function render() {
+    const currentTheme = $("article-theme").value;
+    const themeList = themes();
+    $("article-theme").innerHTML = themeList.length ? themeList.map(theme => `<option value="${esc(theme)}">${esc(theme)}</option>`).join("") : '<option value="">記録を追加すると選べます</option>';
+    if (themeList.includes(currentTheme)) $("article-theme").value = currentTheme;
+    const selected = $("article-theme").value;
+    const list = records.filter(record => !selected || record.theme === selected).sort((a,b) => (a.date || "").localeCompare(b.date || ""));
+    $("cards").innerHTML = list.length ? list.map(record => `
+      <article class="card" data-id="${esc(record.id)}">
+        <div class="card-head"><div><strong>${esc(record.title)}</strong> <span class="pill">${esc(record.kind)}</span> <span class="pill">${esc(record.certainty)}</span><div class="muted">${esc(record.date || "日付未記録")} · ${esc(record.source || "出典未記載")}</div></div><button class="danger remove" type="button" aria-label="${esc(record.title)}を削除">削除</button></div>
+        <p>${esc(record.body)}</p>
+        <div class="card-controls"><div><label>テーマ</label><input class="theme-edit" value="${esc(record.theme)}"></div><div><label>記事の章</label><select class="phase-edit">${phases.map(phase => `<option ${record.phase === phase ? "selected" : ""}>${phase}</option>`).join("")}</select></div></div>
+      </article>`).join("") : '<div class="empty">このテーマのカードはありません。</div>';
+    updatePreview();
+  }
+  function updatePreview() {
+    const theme = $("article-theme").value;
+    const articleRecords = records.filter(record => !theme || record.theme === theme).sort((a,b) => (a.date || "").localeCompare(b.date || ""));
+    if (!articleRecords.length) { $("preview").textContent = "テーマを選ぶと記事の下書きを表示します。"; return; }
+    const title = $("article-title").value.trim() || `${theme}の振り返り`;
+    let text = `# ${title}\n\n`;
+    const intro = $("intro").value.trim();
+    if (intro) text += `${intro}\n\n`;
+    for (const phase of phases) {
+      text += `## ${phase}\n\n`;
+      const items = articleRecords.filter(record => record.phase === phase);
+      if (!items.length) { text += "（記録なし）\n\n"; continue; }
+      for (const item of items) {
+        text += `### ${item.title}\n\n${item.body}\n\n`;
+        text += `> 根拠状態：${item.certainty}。出典：${item.source || "未記載"}。種別：${item.kind}${item.date ? `、日付：${item.date}` : "、日付未記録"}\n\n`;
+      }
+    }
+    text += "## 出典と確認事項\n\n";
+    const missing = articleRecords.filter(record => !record.source || record.certainty === "未確認");
+    text += missing.length ? missing.map(record => `- ${record.title}：${record.source ? "内容が未確認" : "出典が未記載"}`).join("\n") : "- 各カードに出典が登録されています。記事公開前に本文との対応を確認してください。";
+    $("preview").textContent = text;
+  }
+  $("entry-form").addEventListener("submit", event => {
+    event.preventDefault();
+    records.push({ id: crypto.randomUUID(), kind:$("kind").value, date:$("date").value, title:$("title").value.trim(), theme:$("theme").value.trim(), certainty:$("certainty").value, body:$("body").value.trim(), source:$("source").value.trim(), phase:"承" });
+    persist(); event.target.reset(); render(); status("カードを保存しました。記事テーマと章を確認してください。");
+  });
+  $("cards").addEventListener("change", event => {
+    const card = event.target.closest("[data-id]"); if (!card) return;
+    const record = records.find(item => item.id === card.dataset.id); if (!record) return;
+    if (event.target.classList.contains("theme-edit")) record.theme = event.target.value.trim();
+    if (event.target.classList.contains("phase-edit")) record.phase = event.target.value;
+    persist(); render();
+  });
+  $("cards").addEventListener("click", event => {
+    const button = event.target.closest(".remove"); if (!button) return;
+    const card = button.closest("[data-id]"); records = records.filter(item => item.id !== card.dataset.id); persist(); render(); status("カードを削除しました。");
+  });
+  $("article-theme").addEventListener("change", render);
+  $("article-title").addEventListener("input", updatePreview);
+  $("intro").addEventListener("input", updatePreview);
+  $("download-md").addEventListener("click", () => {
+    const theme = $("article-theme").value || "article";
+    const blob = new Blob([$("preview").textContent], {type:"text/markdown;charset=utf-8"});
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `${theme.replace(/[^\p{L}\p{N}_-]+/gu,"-")}.md`; link.click(); URL.revokeObjectURL(link.href); status("Markdown記事を書き出しました。");
+  });
+  $("export-json").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify({version:1,records},null,2)], {type:"application/json"});
+    const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "theme-story-data.json"; link.click(); URL.revokeObjectURL(link.href); status("記録データを書き出しました。");
+  });
+  $("import-json").addEventListener("click", () => $("json-file").click());
+  $("json-file").addEventListener("change", async event => {
+    const file = event.target.files[0]; if (!file) return;
+    try { const data = JSON.parse(await file.text()); if (!Array.isArray(data.records)) throw new Error("records配列がありません"); records = data.records; persist(); render(); status("記録データを読み込みました。"); }
+    catch (error) { status(`読み込みに失敗しました：${error.message}`); }
+    event.target.value = "";
+  });
+  $("demo").addEventListener("click", () => {
+    if (records.length && !confirm("現在の記録に例を追加しますか？")) return;
+    const theme = "演習環境の事前確認";
+    records.push(
+      {id:crypto.randomUUID(),kind:"開発ログ",date:"2026-10-08",title:"演習開始状態の差を確認",theme,certainty:"確認済み",body:"研修VMごとに必要パッケージとWebサーバーの状態を確認し、演習の前提と異なる点を見つけた。",source:"実施振り返り 2026-10-09",phase:"起"},
+      {id:crypto.randomUUID(),kind:"日報",date:"2026-10-09",title:"講師端末のlocalhostで進行",theme,certainty:"報告",body:"接続障害時、研修VMではなく講師端末内のlocalhostを使って進行した。",source:"実施振り返り 2026-10-09",phase:"承"},
+      {id:crypto.randomUUID(),kind:"ナレッジ",date:"2026-10-09",title:"資料の接続先と実際の手順を合わせる",theme,certainty:"確認済み",body:"次回は研修VMとlocalhostのどちらを使うか明記し、接続先・実行場所・期待結果を実際の進行に合わせる。",source:"実施振り返り 2026-10-09",phase:"結"}
+    );
+    $("article-title").value="演習環境の事前確認から得た教訓"; $("intro").value="演習を予定どおり進めるには、教材が想定する環境と当日の実行環境をそろえておく必要がある。"; persist(); render(); status("例を追加しました。転の章に入れる事実は、元資料を確認してから配置してください。");
+  });
+  render();
+})();
+</script>
+</body>
+</html>
